@@ -36,42 +36,68 @@ const sketch = ({ context }) => {
   // Setup a geometry
   // const geometry = new THREE.SphereGeometry(1, 32, 16);
   const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const randomColor = getRandomColor()
-  console.log("randomColor", randomColor)
   // Setup a material
-  const materialBasic = new THREE.MeshBasicMaterial({
-    color: randomColor,
-    wireframe: true
-  });
-  const material = new THREE.MeshNormalMaterial();
-  const materialStandar = new THREE.MeshStandardMaterial();
+  // const materialBasic = new THREE.MeshBasicMaterial({
+  //   color: getRandomColor(),
+  //   // wireframe: true,
+  //   // wireframeLinewidth: 5,
+  //   // wireframeLinecap: "round", 
+  // });
+  const materialNormal = new THREE.MeshNormalMaterial();
+  const materialStandard = new THREE.MeshStandardMaterial();
 
   // Setup a mesh with geometry + material
   function rotateMesh(mesh, i = 1) {
     const value = Math.max(1, Math.random() * 10 * i) 
     return (time) => {
       mesh.rotation.y = time / value
+      mesh.rotation.x = time / value
     }
   }
   const rotateFuncs = []
-  for (let i = 0; i < 10; i++) {
-    console.log("count", i)
-    const swapMaterial = Math.random() > .5 ? materialBasic : material
+  for (let i = 0; i < 30; i++) {
+    // materialBasic.setValues({color: getRandomColor()})
+    const materialBasic = new THREE.MeshBasicMaterial({
+      color: getRandomColor(),
+    });
+    const materialStandard = new THREE.MeshStandardMaterial({color: getRandomColor()});
+    // const swapMaterial = Math.random() > .5 ? materialBasic : materialStandard
+    // creation of mesh seems to be the most important part
     const mesh = new THREE.Mesh(
       geometry, 
-      swapMaterial
+      materialStandard
     );
     scene.add(mesh);
     // mesh.position.set(Math.random(), Math.random(), Math.random())
     mesh.position.set(
-      Random.range(-1, .5), 
-      Random.range(-1, .5), 
-      Random.range(-1, .5)
+      Random.range(-1, 1), 
+      Random.range(-1, 1), 
+      Random.range(-1, 1)
     )
-    mesh.scale.multiplyScalar(0.2)
+    mesh.scale.set(
+      Random.range(-1, 1), 
+      Random.range(-1, 1), 
+      Random.range(-1, 1)
+    )
+    mesh.scale.multiplyScalar(0.5) // multiplys x, y, z by same value
     // mesh.rotation.y = 5 * i
-    rotateFuncs.push(rotateMesh(mesh, i))
+    rotateFuncs.push(rotateMesh(mesh))
   }
+  // LIGHTS
+  const lightDirectional = new THREE.DirectionalLight(0xffffff, 0.9)
+  // lightDirectional.position.x = 50
+  // lightDirectional.position.y = 50
+  // lightDirectional.position.z = 100
+  lightDirectional.position.set(
+    Random.range(0, 10), 
+    Random.range(10, 20), 
+    100
+  )
+  scene.add(lightDirectional)
+  // const light = new THREE.AmbientLight(0x404040)
+  const light = new THREE.AmbientLight("hsl(360, 50%, 20%)")
+  scene.add(light)
+
 
   // draw each frame
   return {
@@ -83,10 +109,14 @@ const sketch = ({ context }) => {
     },
     // Update & render your scene here
     render({ time }) {
+      // mesh rotation
       for (let func of rotateFuncs){
         // mesh.rotation.y = time / 5
         func(time)
       }
+      // scene rotation
+      scene.rotation.y = time * .05
+      scene.rotation.x = time * .05
       renderer.render(scene, camera);
     },
     // Dispose of events & renderer for cleaner hot-reloading
@@ -103,7 +133,8 @@ function loadOrthographicCameraInfo(camera, viewportWidth, viewportHeight) {
   const aspect = viewportWidth / viewportHeight;
 
 // Ortho zoom
-  const zoom = 1.0;
+// bigger number => further away
+  const zoom = 1.5;
 
 // Bounds
 camera.left = -zoom * aspect;
