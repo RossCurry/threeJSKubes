@@ -73,12 +73,17 @@ const sketch = ({ context }) => {
 
   document.addEventListener("click", (mouseEvent) => {
     drawRipple(mouseEvent)
-    console.log("newBox", rotateFuncs.length)
     const numOfBoxes = rotateFuncs.length
-    if (numOfBoxes >= 40) return;
+    if (numOfBoxes >= 40) {
+      // set scene rotation
+      return
+    };
     const {x, y} = mouseEvent
     const mesh = addMeshObject(scene, geometry, {x, y})
     rotateFuncs.push(rotateMesh(mesh))
+    if (rotateFuncs.length >= 40) {
+      drawMessage()
+    }
   })
   document.documentElement.style.cursor = "pointer"
 
@@ -98,9 +103,16 @@ const sketch = ({ context }) => {
         // mesh.rotation.y = time / 5
         func(time)
       }
-      // scene rotation
-      // scene.rotation.y = time * .05
-      // scene.rotation.x = time * .05
+      const numOfBoxes = rotateFuncs.length
+      if (numOfBoxes >= 40){
+        // drawMessage()
+        // scene rotation
+        const slowerTime = time * 0.2
+        // scene.rotation.y = slowerTime
+        // scene.rotation.x = slowerTime
+        // scene.rotation.z = slowerTime
+        scene.rotation.set(slowerTime, slowerTime * 3, slowerTime * 2)
+      }
       renderer.render(scene, camera);
     },
     // Dispose of events & renderer for cleaner hot-reloading
@@ -167,8 +179,6 @@ function addMeshObject(scene, geometry, mousePosition) {
     geometry, 
     materialStandard
   );
-  scene.add(mesh);
-  // mesh.position.set(Math.random(), Math.random(), Math.random())
   let relX = 0
   let relY = 0
   if (mousePosition.x){
@@ -176,14 +186,7 @@ function addMeshObject(scene, geometry, mousePosition) {
     relX = position.relX
     relY = position.relY
   }
-  console.log("relX, relY", relX, relY)
   mesh.position.set(
-    // Random.range(-1, 1), 
-    // Random.range(-1, 1), 
-    // Random.range(-1, 1)
-    // relX ? relX * 2 : Random.range(-1, 1), 
-    // relY ? relY * 2 : Random.range(-1, 1), 
-    // Random.range(-1, 1)
     relX, relY, -relX
   )
   mesh.scale.set(
@@ -192,26 +195,34 @@ function addMeshObject(scene, geometry, mousePosition) {
     Random.range(-1, 1)
   )
   mesh.scale.multiplyScalar(0.5) // multiplys x, y, z by same value
-  // mesh.rotation.y = 5 * i
-  // rotateFuncs.push(rotateMesh(mesh))
+  scene.add(mesh);
   return mesh
 }
 
 function drawRipple(clickEvent) {
-  // console.log(event)
   const {x, y} = clickEvent
-  console.log("position", x, y)
   const circle = document.createElement("div")
   circle.classList.add("ripple")
   circle.style.left = x + "px"
   circle.style.top = y + "px"
   circle.style.borderColor = getRandomColor()
   circle.addEventListener("animationend", () => {
-    console.log("finishAnimation")
     circle.remove()
   })
   const body = document.querySelector("body")
   body.appendChild(circle)
+}
+
+function drawMessage() {
+  console.log("drawMessage")
+  const message = document.createElement("div")
+  message.textContent = "FULL"
+  message.classList.add("message")
+  const body = document.querySelector("body")
+  message.addEventListener("animationend", () => {
+    message.remove()
+  })
+  body.appendChild(message)
 }
 
 
