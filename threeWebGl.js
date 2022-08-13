@@ -34,15 +34,14 @@ const sketch = ({ context }) => {
   const scene = new THREE.Scene();
 
   // Setup a geometry
-  // const geometry = new THREE.SphereGeometry(1, 32, 16);
+  // geometries are expensive, try to only make one
+  const geometrySphere = new THREE.SphereGeometry(1, 32, 16);
   const geometry = new THREE.BoxGeometry(1, 1, 1);
   // Setup a material
-  // const materialBasic = new THREE.MeshBasicMaterial({
-  //   color: getRandomColor(),
-  //   // wireframe: true,
-  //   // wireframeLinewidth: 5,
-  //   // wireframeLinecap: "round", 
-  // });
+  const materialBasic = new THREE.MeshBasicMaterial({
+    color: getRandomColor(),
+    wireframe: true,
+  });
   const materialNormal = new THREE.MeshNormalMaterial();
   const materialStandard = new THREE.MeshStandardMaterial();
 
@@ -55,34 +54,8 @@ const sketch = ({ context }) => {
     }
   }
   const rotateFuncs = []
-  for (let i = 0; i < 30; i++) {
-    // materialBasic.setValues({color: getRandomColor()})
-    const materialBasic = new THREE.MeshBasicMaterial({
-      color: getRandomColor(),
-    });
-    const materialStandard = new THREE.MeshStandardMaterial({color: getRandomColor()});
-    // const swapMaterial = Math.random() > .5 ? materialBasic : materialStandard
-    // creation of mesh seems to be the most important part
-    const mesh = new THREE.Mesh(
-      geometry, 
-      materialStandard
-    );
-    scene.add(mesh);
-    // mesh.position.set(Math.random(), Math.random(), Math.random())
-    mesh.position.set(
-      Random.range(-1, 1), 
-      Random.range(-1, 1), 
-      Random.range(-1, 1)
-    )
-    mesh.scale.set(
-      Random.range(-1, 1), 
-      Random.range(-1, 1), 
-      Random.range(-1, 1)
-    )
-    mesh.scale.multiplyScalar(0.5) // multiplys x, y, z by same value
-    // mesh.rotation.y = 5 * i
-    rotateFuncs.push(rotateMesh(mesh))
-  }
+  const mesh = addMeshObject(scene, geometry, {x: 0, y: 0})
+  rotateFuncs.push(rotateMesh(mesh))
   // LIGHTS
   const lightDirectional = new THREE.DirectionalLight(0xffffff, 0.9)
   // lightDirectional.position.x = 50
@@ -97,6 +70,17 @@ const sketch = ({ context }) => {
   // const light = new THREE.AmbientLight(0x404040)
   const light = new THREE.AmbientLight("hsl(360, 50%, 20%)")
   scene.add(light)
+
+  document.addEventListener("click", (mouseEvent) => {
+    drawRipple(mouseEvent)
+    console.log("newBox", rotateFuncs.length)
+    const numOfBoxes = rotateFuncs.length
+    if (numOfBoxes >= 40) return;
+    const {x, y} = mouseEvent
+    const mesh = addMeshObject(scene, geometry, {x, y})
+    rotateFuncs.push(rotateMesh(mesh))
+  })
+  document.documentElement.style.cursor = "pointer"
 
 
   // draw each frame
@@ -115,8 +99,8 @@ const sketch = ({ context }) => {
         func(time)
       }
       // scene rotation
-      scene.rotation.y = time * .05
-      scene.rotation.x = time * .05
+      // scene.rotation.y = time * .05
+      // scene.rotation.x = time * .05
       renderer.render(scene, camera);
     },
     // Dispose of events & renderer for cleaner hot-reloading
@@ -157,3 +141,112 @@ camera.updateProjectionMatrix();
 function getRandomColor() {
   return (`rgb(${Math.floor(Math.random() * 365)}, ${Math.floor(Math.random() * 365)}, ${Math.floor(Math.random() * 365)})`); 
 }
+
+
+function addMeshObject(scene, geometry, mousePosition) {
+  function estimateRelativePosition({x, y}) {
+    const h = document.documentElement.clientHeight
+    const w = document.documentElement.clientWidth
+    const halfW = w / 2
+    const halfH = h / 2
+    const relX =  -(halfW - x) / halfW
+    const relY =  (halfH - y) / halfH
+    const aspectRatio = w / h
+    return {
+      // multiplier here should be some sort of aspect ratio
+      relX: relX * aspectRatio ,
+      relY: relY * aspectRatio ,
+    }
+  }
+  // creation of mesh seems to be the most important part
+  const materialBasic = new THREE.MeshBasicMaterial({
+    color: getRandomColor(),
+  });
+  const materialStandard = new THREE.MeshStandardMaterial({color: getRandomColor()});
+  const mesh = new THREE.Mesh(
+    geometry, 
+    materialStandard
+  );
+  scene.add(mesh);
+  // mesh.position.set(Math.random(), Math.random(), Math.random())
+  let relX = 0
+  let relY = 0
+  if (mousePosition.x){
+    const position = estimateRelativePosition(mousePosition)
+    relX = position.relX
+    relY = position.relY
+  }
+  console.log("relX, relY", relX, relY)
+  mesh.position.set(
+    // Random.range(-1, 1), 
+    // Random.range(-1, 1), 
+    // Random.range(-1, 1)
+    // relX ? relX * 2 : Random.range(-1, 1), 
+    // relY ? relY * 2 : Random.range(-1, 1), 
+    // Random.range(-1, 1)
+    relX, relY, -relX
+  )
+  mesh.scale.set(
+    Random.range(-1, 1), 
+    Random.range(-1, 1), 
+    Random.range(-1, 1)
+  )
+  mesh.scale.multiplyScalar(0.5) // multiplys x, y, z by same value
+  // mesh.rotation.y = 5 * i
+  // rotateFuncs.push(rotateMesh(mesh))
+  return mesh
+}
+
+function drawRipple(clickEvent) {
+  // console.log(event)
+  const {x, y} = clickEvent
+  console.log("position", x, y)
+  const circle = document.createElement("div")
+  circle.classList.add("ripple")
+  circle.style.left = x + "px"
+  circle.style.top = y + "px"
+  circle.style.borderColor = getRandomColor()
+  circle.addEventListener("animationend", () => {
+    console.log("finishAnimation")
+    circle.remove()
+  })
+  const body = document.querySelector("body")
+  body.appendChild(circle)
+}
+
+
+const link = document.createElement('link');
+  link.rel = "stylesheet";
+  link.type = "text/css";
+  link.href = "style.css";
+  document.head.appendChild(link)
+
+///////////// for loop  /////////
+// for (let i = 0; i < 1; i++) {
+//   // materialBasic.setValues({color: getRandomColor()})
+//   const materialBasic = new THREE.MeshBasicMaterial({
+//     color: getRandomColor(),
+//   });
+//   const materialStandard = new THREE.MeshStandardMaterial({color: getRandomColor()});
+//   // const swapMaterial = Math.random() > .5 ? materialBasic : materialStandard
+//   // creation of mesh seems to be the most important part
+//   const mesh = new THREE.Mesh(
+//     geometry, 
+//     materialStandard
+//   );
+//   scene.add(mesh);
+//   // mesh.position.set(Math.random(), Math.random(), Math.random())
+//   mesh.position.set(
+//     Random.range(-1, 1), 
+//     Random.range(-1, 1), 
+//     Random.range(-1, 1)
+//   )
+//   mesh.scale.set(
+//     Random.range(-1, 1), 
+//     Random.range(-1, 1), 
+//     Random.range(-1, 1)
+//   )
+//   mesh.scale.multiplyScalar(0.5) // multiplys x, y, z by same value
+//   // mesh.rotation.y = 5 * i
+//   rotateFuncs.push(rotateMesh(mesh))
+// }

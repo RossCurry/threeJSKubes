@@ -1,0 +1,25 @@
+.ripple {
+  /* background-color: red; */
+  width: 1px;
+  height: 1px;
+  border-width: 20px;
+  border-style: solid;
+  border-radius: 50%;
+  position: absolute;
+  content: "";
+  transform: translate(-50%, -50%);
+  animation: rippleOut 200ms ease-out 1 forwards;
+}
+
+@keyframes rippleOut {
+  from {
+    width: 1px;
+    height: 1px;
+    opacity: 1;
+  }
+  to {
+    width: 200px;
+    height: 200px;
+    opacity: 0;
+  }
+}
