@@ -1,0 +1,55 @@
+.ripple {
+  /* background-color: red; */
+  width: 1px;
+  height: 1px;
+  border-width: 20px;
+  border-style: solid;
+  border-radius: 50%;
+  position: absolute;
+  content: "";
+  transform: translate(-50%, -50%);
+  animation: rippleOut 200ms ease-out 1 forwards;
+}
+
+.message {
+  position: absolute;
+  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(77, 223, 55);
+  padding: 2rem;
+  /* font-size-adjust: inherit; */
+  font-size: min(100vw, max(1rem, 40vw));
+  font-weight: 900;
+  animation: fontIn 3000ms ease-in forwards;
+  text-align: center;
+  letter-spacing: normal;
+}
+
+
+@keyframes rippleOut {
+  from {
+    width: 1px;
+    height: 1px;
+    opacity: 1;
+  }
+  to {
+    width: 200px;
+    height: 200px;
+    opacity: 0;
+  }
+}
+
+@keyframes fontIn {
+  0% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+    letter-spacing: normal;
+    transform: scale(1);
+  }
+  100% {
+    letter-spacing: 5rem;
+    opacity: 0;
+    transform: scale(100);
+  }
+}
