@@ -6,8 +6,18 @@ require("three/examples/js/controls/OrbitControls");
 
 const canvasSketch = require("canvas-sketch");
 const Random = require("canvas-sketch-util/random")
+const eases = require("eases")
+const BezierEasing = require("bezier-easing")
+// create a custom easing function: https://cubic-bezier.com/#.67,.08,.67,.93
+const easeFn = BezierEasing(.67,.08,.67,.93)
 
 const settings = {
+  // // settings for GIF
+  // dimensions: [512, 512],
+  // fps: 24, 
+  // duration: 4, // swap prop: time for playhead with a duration
+
+
   // Make the loop animated
   animate: true,
   // Get a WebGL canvas rather than 2D
@@ -49,8 +59,12 @@ const sketch = ({ context }) => {
   function rotateMesh(mesh, i = 1) {
     const value = Math.max(1, Math.random() * 10 * i) 
     return (time) => {
-      mesh.rotation.y = time / value
-      mesh.rotation.x = time / value
+      // using eases from eases module
+      // mesh.rotation.y = eases.expoInOut(time) / value
+      // mesh.rotation.x = eases.expoInOut(time) / value
+      // using custom ease function
+      mesh.rotation.y = easeFn(time) / value
+      mesh.rotation.x = easeFn(time) / value
     }
   }
   const rotateFuncs = []
@@ -98,17 +112,22 @@ const sketch = ({ context }) => {
       loadOrthographicCameraInfo(camera, viewportWidth, viewportHeight)
     },
     // Update & render your scene here
-    render({ time }) {
+    render({ time, playhead }) {
       // mesh rotation
+      let index = 1
       for (let func of rotateFuncs){
         // mesh.rotation.y = time / 5
-        func(time)
+
+        func(Math.sin(time + index)) 
+        index++
+        // func(playhead) // when using export to video
       }
       const numOfBoxes = rotateFuncs.length
       if (numOfBoxes >= 40){
         // drawMessage()
         // scene rotation
-        const slowerTime = time * 0.2
+        const slowerTime = Math.sin(time * 0.2)
+        // const slowerTime = playhead * 0.2 // when using export to video
         // scene.rotation.y = slowerTime
         // scene.rotation.x = slowerTime
         // scene.rotation.z = slowerTime
@@ -238,33 +257,3 @@ const link = document.createElement('link');
   link.type = "text/css";
   link.href = "style.css";
   document.head.appendChild(link)
-
-///////////// for loop  /////////
-// for (let i = 0; i < 1; i++) {
-//   // materialBasic.setValues({color: getRandomColor()})
-//   const materialBasic = new THREE.MeshBasicMaterial({
-//     color: getRandomColor(),
-//   });
-//   const materialStandard = new THREE.MeshStandardMaterial({color: getRandomColor()});
-//   // const swapMaterial = Math.random() > .5 ? materialBasic : materialStandard
-//   // creation of mesh seems to be the most important part
-//   const mesh = new THREE.Mesh(
-//     geometry, 
-//     materialStandard
-//   );
-//   scene.add(mesh);
-//   // mesh.position.set(Math.random(), Math.random(), Math.random())
-//   mesh.position.set(
-//     Random.range(-1, 1), 
-//     Random.range(-1, 1), 
-//     Random.range(-1, 1)
-//   )
-//   mesh.scale.set(
-//     Random.range(-1, 1), 
-//     Random.range(-1, 1), 
-//     Random.range(-1, 1)
-//   )
-//   mesh.scale.multiplyScalar(0.5) // multiplys x, y, z by same value
-//   // mesh.rotation.y = 5 * i
-//   rotateFuncs.push(rotateMesh(mesh))
-// }
